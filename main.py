@@ -1,28 +1,49 @@
 from PIL import Image, ExifTags
 
-img = Image.open("img.jpg")
-exif_data = img._getexif()
+img = Image.open("IMG_0854.JPG")
+exifData = img._getexif()
 
-if exif_data:
-    exif = {ExifTags.TAGS[k]: v for k, v in exif_data.items() if k in ExifTags.TAGS}
+if exifData:
+    exif = {ExifTags.TAGS[k]: v for k, v in exifData.items() if k in ExifTags.TAGS}
     print(exif)
 else:
     exif = {}
 
 if "GPSInfo" in exif:
-    def gps_info_to_string(gps_info):
-        lat_degrees, lat_minutes, lat_seconds = gps_info[2]
-        lat_direction = gps_info[1]
+    def gpsInfoConverting(gpsInfo):
+        latDegrees, latMinutes, latSeconds = gpsInfo[2]
+        latDirection = gpsInfo[1]
 
-        lon_degrees, lon_minutes, lon_seconds = gps_info[4]
-        lon_direction = gps_info[3]
+        lonDegrees, lonMinutes, lonSeconds = gpsInfo[4]
+        lonDirection = gpsInfo[3]
 
-        latitude_str = f"{int(lat_degrees)}°{int(lat_minutes)}'{float(lat_seconds):.2f}\" {lat_direction}"
-        longitude_str = f"{int(lon_degrees)}°{int(lon_minutes)}'{float(lon_seconds):.2f}\" {lon_direction}"
+        latitudeStr = f"{int(latDegrees)}°{int(latMinutes)}'{float(latSeconds):.2f}\" "
+        longitudeStr = f"{int(lonDegrees)}°{int(lonMinutes)}'{float(lonSeconds):.2f}\" "
 
-        return f"{latitude_str}, {longitude_str}"
+        decimalLat = int(latDegrees) + float(latMinutes)/60 + float(latSeconds)/3600
+        decimalLong = int(lonDegrees) + float(lonMinutes) / 60 + float(lonSeconds) / 3600
 
-    gps_string = gps_info_to_string(exif["GPSInfo"])
-    print(gps_string)
+        return decimalLat, decimalLong, latitudeStr, longitudeStr, latDirection, lonDirection
+
+    gpsInfo = gpsInfoConverting(exif["GPSInfo"])
+    decimalLat, decimalLong, sexagesimalLat, sexagesimalLong, latDirection, longDirection = gpsInfo
+    print(f'''
+███████████████████████████████████████
+
+Десятичные координаты:
+{decimalLong} {longDirection}
+{decimalLat} {latDirection}
+
+███████████████████████████████████████
+
+Шестидесятиричные координаты:
+{sexagesimalLong} {longDirection}
+{sexagesimalLat} {latDirection}
+
+███████████████████████████████████████
+
+Ссылка на яндекс картах:
+https://yandex.ru/maps/213/moscow/?ll={decimalLong}%2C{decimalLat}&mode=whatshere&whatshere%5Bpoint%5D={decimalLong}%2C{decimalLat}
+    ''')
 else:
-    print("No info found")
+    print("Файл не содержит метаданных о геопозиции, или произошла ошибка")
